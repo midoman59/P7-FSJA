@@ -11,6 +11,22 @@ L'application MicroCRM est une implémentation simplifiée d'un ["CRM" (Customer
 ![Page d'accueil](./misc/screenshots/screenshot_1.png)
 ![Édition de la fiche d'un individu](./misc/screenshots/screenshot_2.png)
 
+## Versions et Configuration
+
+| Composant | Version | Notes |
+|-----------|---------|-------|
+| **Backend** | Spring Boot 3.2.5 | Java 17 (build), JRE 21 (runtime) |
+| **Frontend** | Angular 17.3.0 | TypeScript 5.4.2 |
+| **Node.js** | 20.x+ (recommandé) | npm 10.x+ |
+| **Docker** | 20.x+ | Alpine 3.19, Caddy, Supervisor |
+| **Gradle** | 8.7 (wrapper) | Wrapper inclus, pas d'install global nécessaire |
+
+### Ports d'Application
+
+- **Frontend** (développement) : http://localhost:4200
+- **Frontend** (production Docker) : https://localhost
+- **Backend API** : http://localhost:8080/api/
+
 ## Code source
 
 ### Organisation
