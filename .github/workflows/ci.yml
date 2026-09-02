@@ -1,0 +1,185 @@
+name: CI - Build, Test & Analyze
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build-backend:
+    name: Build Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: gradle
+
+      - name: Build backend with Gradle
+        run: |
+          cd back
+          ./gradlew build -x test
+
+      - name: Upload backend artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-jar
+          path: back/build/libs/
+
+  test-backend:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    needs: build-backend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: gradle
+
+      - name: Run backend tests
+        run: |
+          cd back
+          ./gradlew test
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-test-results
+          path: back/build/test-results/
+
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: front/package-lock.json
+
+      - name: Install frontend dependencies
+        run: |
+          cd front
+          npm ci
+
+      - name: Build frontend
+        run: |
+          cd front
+          npm run build
+
+      - name: Upload frontend artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-dist
+          path: front/dist/
+
+  test-frontend:
+    name: Test Frontend
+    runs-on: ubuntu-latest
+    needs: build-frontend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: front/package-lock.json
+
+      - name: Install frontend dependencies
+        run: |
+          cd front
+          npm ci
+
+      - name: Run frontend tests
+        run: |
+          cd front
+          npm test -- --watch=false --browsers=ChromeHeadless
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-test-results
+          path: front/coverage/
+
+  sonarqube-analysis:
+    name: SonarQube Analysis
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: front/package-lock.json
+
+      - name: Build backend for SonarQube
+        run: |
+          cd back
+          ./gradlew build -x test
+
+      - name: Build frontend for SonarQube
+        run: |
+          cd front
+          npm ci
+          npm run build
+
+      - name: Run SonarQube analysis
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  status-check:
+    name: Final Status Check
+    runs-on: ubuntu-latest
+    needs: [build-backend, test-backend, build-frontend, test-frontend, sonarqube-analysis]
+    if: always()
+    steps:
+      - name: Check build status
+        run: |
+          if [[ "${{ needs.build-backend.result }}" == "failure" || \
+                "${{ needs.test-backend.result }}" == "failure" || \
+                "${{ needs.build-frontend.result }}" == "failure" || \
+                "${{ needs.test-frontend.result }}" == "failure" || \
+                "${{ needs.sonarqube-analysis.result }}" == "failure" ]]; then
+            echo "❌ CI Pipeline FAILED"
+            exit 1
+          fi
+          echo "✅ CI Pipeline PASSED"
