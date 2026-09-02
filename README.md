@@ -43,7 +43,7 @@ Ce [monorepo](https://en.wikipedia.org/wiki/Monorepo) contient les 2 composantes
    ./gradlew build
 
    # Sur Windows
-   gradlew.bat build
+   ./gradlew.bat build
    ```
 
 3. Démarrer le service:
@@ -94,7 +94,8 @@ Dans votre terminal:
 
 ```shell
 cd front
-CHROME_BIN=</path/to/google/chrome> npm test
+$env:CHROME_BIN="C:\Program Files\Google\Chrome\Application\chrome.exe"
+npm test
 ```
 
 #### Serveur
