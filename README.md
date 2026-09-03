@@ -170,3 +170,91 @@ docker run -it --rm -p 8080:8080 -p 80:80 -p 443:443 orion-microcrm-standalone:l
 ```
 
 L'application sera disponible sur https://localhost et l'API sur http://localhost:8080.
+
+### Docker Compose
+
+Pour orchestrer les services frontend et backend ensemble localement :
+
+#### Prérequis
+
+- Docker 20.x+
+- docker-compose 1.x+
+- 2 GB RAM libre
+- Ports 80, 443, 8080 disponibles
+
+#### Démarrer les services
+
+```shell
+# Construire les images
+docker-compose build
+
+# Lancer les services
+docker-compose up -d
+
+# Vérifier le statut
+docker-compose ps
+```
+
+#### Accéder à l'application
+
+- **Frontend (HTTP)** : http://localhost (redirige automatiquement vers HTTPS)
+- **Frontend (HTTPS)** : https://localhost (certificat auto-signé)
+- **Backend API** : http://localhost:8080
+- **API Endpoints** :
+  - `/` : Racine avec HATEOAS links
+  - `/persons` : Liste des personnes
+  - `/organizations` : Liste des organisations
+  - `/profile` : Profil API
+
+#### Consulter les logs
+
+```shell
+# Tous les services
+docker-compose logs -f
+
+# Service spécifique
+docker-compose logs -f backend
+docker-compose logs -f frontend
+```
+
+#### Arrêter les services
+
+```shell
+docker-compose down
+```
+
+---
+
+## CI/CD et Qualité
+
+Cette application bénéficie d'une chaîne d'intégration et déploiement continu :
+
+### GitHub Actions
+
+Workflow automatisé à chaque push et pull request :
+
+- **Build Backend** : `./gradlew build`
+- **Test Backend** : JUnit 5 tests
+- **Build Frontend** : `npm run build`
+- **Test Frontend** : Karma/Jasmine tests (Chrome headless)
+- **SonarQube Analysis** : Analyse de code et sécurité
+- **Status Check** : Validation finale
+
+📊 **Résultats** : https://github.com/midoman59/P7-FSJA/actions
+
+### SonarQube Cloud
+
+Analyse continue de qualité et sécurité du code :
+
+- **Langage** : Java (backend), TypeScript (frontend)
+- **Règles** : OWASP Top 10, Security Hotspots
+- **Coverage** : Rapports de couverture de code
+- **Grade** : A/B/C/D/E basé sur la qualité
+
+📊 **Dashboard** : https://sonarcloud.io/projects/midoman59_P7-FSJA
+
+### Secrets et Sécurité
+
+- Tokens SonarQube : Stockés dans GitHub Secrets (masqués)
+- Aucune fuite d'information sensible dans les logs
+- Accès contrôlé via authentification GitHub
