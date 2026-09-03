@@ -159,10 +159,60 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+  measure-dora-metrics:
+    name: Measure DORA Metrics
+    runs-on: ubuntu-latest
+    needs: [build-backend, test-backend, build-frontend, test-frontend, sonarqube-analysis]
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Calculate DORA Metrics
+        run: |
+          # Lead Time for Changes: workflow start to completion
+          WORKFLOW_START=${{ github.event.head_commit.timestamp }}
+          WORKFLOW_END=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          # Calculate lead time in seconds
+          START_EPOCH=$(date -d "$WORKFLOW_START" +%s)
+          END_EPOCH=$(date -d "$WORKFLOW_END" +%s)
+          LEAD_TIME=$((END_EPOCH - START_EPOCH))
+
+          # Get workflow status for Change Failure Rate
+          BUILD_STATUS="${{ needs.build-backend.result }}"
+          TEST_STATUS="${{ needs.test-backend.result }}"
+          FRONTEND_STATUS="${{ needs.build-frontend.result }}"
+          FRONTEND_TEST_STATUS="${{ needs.test-frontend.result }}"
+          SONAR_STATUS="${{ needs.sonarqube-analysis.result }}"
+
+          # Calculate CFR (0 if all passed, 1 if any failed)
+          CFR="0"
+          if [[ "$BUILD_STATUS" == "failure" || "$TEST_STATUS" == "failure" || \
+                "$FRONTEND_STATUS" == "failure" || "$FRONTEND_TEST_STATUS" == "failure" || \
+                "$SONAR_STATUS" == "failure" ]]; then
+            CFR="1"
+          fi
+
+          # Log metrics
+          echo "=== DORA Metrics ==="
+          echo "Lead Time for Changes: ${LEAD_TIME}s"
+          echo "Change Failure Rate: ${CFR}"
+          echo "Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: Store DORA Metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: dora-metrics
+          path: |
+            - Lead Time: ${{ github.event.head_commit.timestamp }}
+            - Completion: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+            - Workflow ID: ${{ github.run_id }}
+
   status-check:
     name: Final Status Check
     runs-on: ubuntu-latest
-    needs: [build-backend, test-backend, build-frontend, test-frontend, sonarqube-analysis]
+    needs: [build-backend, test-backend, build-frontend, test-frontend, sonarqube-analysis, measure-dora-metrics]
     if: always()
     steps:
       - name: Check build status
