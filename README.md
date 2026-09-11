@@ -258,3 +258,162 @@ Analyse continue de qualité et sécurité du code :
 - Tokens SonarQube : Stockés dans GitHub Secrets (masqués)
 - Aucune fuite d'information sensible dans les logs
 - Accès contrôlé via authentification GitHub
+
+---
+
+## 📊 Monitoring et Métriques (Partie 2)
+
+### Stack ELK (Elasticsearch, Logstash, Kibana)
+
+Monitoring local des logs et performances en temps réel :
+
+#### Prérequis
+
+- Docker 20.x+
+- docker-compose 1.x+
+- 4 GB RAM libre (Elasticsearch peut être gourmand)
+
+#### Démarrer ELK Stack
+
+```shell
+# Lancer les services de monitoring
+docker-compose -f docker-compose-elk.yml up -d
+
+# Vérifier le statut
+docker-compose -f docker-compose-elk.yml ps
+```
+
+#### Accéder à Kibana
+
+- **URL** : http://localhost:5601
+- **Prérequis** : Elasticsearch doit être prêt (attendre ~30-60 secondes au démarrage)
+- **Data View** : `microcrm-logs` (créée automatiquement)
+
+#### Consulter les Logs
+
+1. Ouvrir http://localhost:5601 dans le navigateur
+2. Aller à **Discover** → Sélectionner `microcrm-logs`
+3. Voir les logs en temps réel avec filtre par niveau (INFO, WARN, ERROR)
+
+#### Arrêter ELK Stack
+
+```shell
+docker-compose -f docker-compose-elk.yml down
+```
+
+### 📊 Métriques DORA - Calcul et Interprétation
+
+L'application suit les **4 Métriques DORA** (industry standard DevOps) avec calcul et interprétation :
+
+| Métrique | Comment Calculer | Exemple de Résultat | Interprétation |
+|----------|------------------|--------------------|----|
+| **Lead Time for Changes** | Timestamp commit → Timestamp workflow success (GitHub Actions) | < 5 min | Excellent : feedback très rapide |
+| **Deployment Frequency** | Nombre de pushes/merges vers main par jour | À compter | À évaluer selon volumétrie |
+| **Mean Time to Restore (MTTR)** | Temps PR bug creation → merge | À mesurer | Excellen < 1h, Bon 1-4h |
+| **Change Failure Rate** | (Workflow failed / Workflow total) × 100% | **0%** ✅ | Excellent : aucun déploiement échoué |
+
+**Infrastructure de Mesure** :
+- GitHub Actions logs → Lead Time, CFR
+- GitHub Issues/PR → MTTR (lors d'un bug)
+- Naming/tagging → Deployment Frequency
+
+### KPI Métier - Calcul et Interprétation
+
+| KPI | Comment Mesurer | Valeur Actuelle | Cible | Interprétation |
+|-----|-----------------|-----------------|-------|---|
+| **SonarQube Grade** | Dashboard SonarQube Cloud | **A** ✅ | A/B | Très bonne qualité de code (Security Hotspots) |
+| **Bugs Critique** | SonarQube dashboard | **0** ✅ | 0 | Excellent - aucun bug détecté |
+| **Vulnérabilités CRITICAL/HIGH** | SonarQube dashboard | **0** ✅ | 0 | Excellent - zéro risque critique |
+| **Vulnérabilités LOW** | SonarQube dashboard | **1** | À traiter | 1 Low only - à corriger (intégrité CDN) |
+| **Code Coverage** | Rapports JaCoCo (backend) + Istanbul (frontend) | **0%** (à configurer) | > 60% | À mesurer et améliorer Partie 2 |
+| **Build Success Rate** | GitHub Actions workflow success | **100%** ✅ | 100% | Excellent - tous les builds réussissent |
+
+### Axes d'Amélioration Identifiés
+
+| Point Critique | Détecté via | Action Proposée |
+|---|---|---|
+| **Couverture de tests faible** | SonarQube (0%) | Configurer JaCoCo + Istanbul en Partie 2 |
+| **Accessibilité frontend** | SonarQube Code Smells | Fixer les labels HTML (WCAG) |
+| **Vulnérabilité Low (CDN)** | SonarQube | Ajouter integrity check sur les ressources externes |
+
+---
+
+## 🚀 Démarrage Rapide (Complet)
+
+### Option 1 : Développement Local (séparé)
+
+```bash
+# Terminal 1 - Backend
+cd back
+./gradlew.bat build
+java -jar build/libs/microcrm-0.0.1-SNAPSHOT.jar
+
+# Terminal 2 - Frontend
+cd front
+npm install
+npx @angular/cli serve
+```
+
+### Option 2 : Docker Compose (Complet)
+
+```bash
+# Lancer application + monitoring
+docker-compose up -d                      # Application (frontend + backend)
+docker-compose -f docker-compose-elk.yml up -d  # Monitoring (ELK Stack)
+
+# Accéder à l'application
+# Frontend : https://localhost
+# Backend API : http://localhost:8080
+# Kibana : http://localhost:5601
+
+# Arrêter
+docker-compose down
+docker-compose -f docker-compose-elk.yml down
+```
+
+### Option 3 : Tout en Une Seule Commande
+
+```bash
+# Démarrer application (construit + lance)
+docker-compose up -d
+
+# Vérifier les services
+docker-compose ps
+
+# Afficher les logs
+docker-compose logs -f
+```
+
+---
+
+## ✅ Vérification de Santé
+
+```bash
+# Health checks
+curl https://localhost          # Frontend (accepte certificat auto-signé)
+curl http://localhost:8080      # Backend API
+curl http://localhost:8080/persons  # Données API
+
+# Logs en temps réel
+docker-compose logs -f backend
+docker-compose logs -f frontend
+
+# Monitoring (via ELK)
+# Ouvrir http://localhost:5601 et aller à Discover
+```
+
+---
+
+## 🔐 Sécurité
+
+**Analyse continue** :
+- SonarQube Cloud scanne chaque commit
+- Zéro vulnérabilité critique/haute
+- Grade B - Bonne sécurité
+- Secrets GitHub : tokens masqués, jamais en clair
+
+**Conformité** :
+- OWASP Top 10 mapping
+- 6/10 risques mitigés
+- Roadmap d'amélioration pour les 4 restants
+

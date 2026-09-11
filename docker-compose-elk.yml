@@ -64,4 +64,4 @@ networks:
   elk:
     driver: bridge
   microcrm:
-    external: true
+    driver: bridge
