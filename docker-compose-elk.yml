@@ -31,6 +31,7 @@ services:
       - "9600:9600"
     networks:
       - elk
+      - microcrm
     depends_on:
       elasticsearch:
         condition: service_healthy
@@ -62,3 +63,5 @@ services:
 networks:
   elk:
     driver: bridge
+  microcrm:
+    external: true
