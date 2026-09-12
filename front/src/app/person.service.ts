@@ -6,6 +6,7 @@ import { API_BASE_URL } from './config'
 
 @Injectable({ providedIn: 'root' })
 export class PersonService {
+  // Service for managing Person data via REST API
   constructor(private client: HttpClient) {
   }
 
