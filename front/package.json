@@ -6,7 +6,9 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "test:coverage": "ng test --watch=false --browsers=ChromeHeadless --code-coverage && npm run fix-coverage",
+    "fix-coverage": "node scripts/normalize-coverage.js"
   },
   "private": true,
   "dependencies": {
