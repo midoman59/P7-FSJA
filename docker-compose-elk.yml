@@ -10,6 +10,8 @@ services:
       - xpack.security.enabled=false
     ports:
       - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
     networks:
       - elk
     healthcheck:
@@ -65,3 +67,6 @@ networks:
     driver: bridge
   microcrm:
     driver: bridge
+
+volumes:
+  esdata:
