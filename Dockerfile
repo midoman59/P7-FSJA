@@ -33,7 +33,7 @@ FROM alpine:3.19 as back
 
 COPY --from=back-build /src/build/libs/microcrm-0.0.1-SNAPSHOT.jar /app/back/microcrm-0.0.1-SNAPSHOT.jar
 
-RUN apk add openjdk21-jre-headless
+RUN apk add openjdk21-jre-headless curl
 
 WORKDIR /app
 
