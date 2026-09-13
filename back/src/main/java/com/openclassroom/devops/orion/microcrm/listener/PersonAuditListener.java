@@ -10,20 +10,16 @@ public class PersonAuditListener {
 
   @PostPersist
   public void onPersonCreate(Person person) {
-    AuditLogger.logCreate("Person", person.getId(),
-        String.format("First: %s, Last: %s, Email: %s", person.getFirstName(), person.getLastName(),
-            person.getEmail()));
+    AuditLogger.logCreate("Person", person.getId(), "Person record created");
   }
 
   @PostUpdate
   public void onPersonUpdate(Person person) {
-    AuditLogger.logUpdate("Person", person.getId(),
-        String.format("Updated: %s %s", person.getFirstName(), person.getLastName()));
+    AuditLogger.logUpdate("Person", person.getId(), "Person record updated");
   }
 
   @PostRemove
   public void onPersonDelete(Person person) {
-    AuditLogger.logDelete("Person", person.getId(),
-        String.format("Deleted: %s %s", person.getFirstName(), person.getLastName()));
+    AuditLogger.logDelete("Person", person.getId(), "Person record deleted");
   }
 }

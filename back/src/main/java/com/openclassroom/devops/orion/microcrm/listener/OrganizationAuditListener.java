@@ -10,16 +10,16 @@ public class OrganizationAuditListener {
 
   @PostPersist
   public void onOrganizationCreate(Organization org) {
-    AuditLogger.logCreate("Organization", org.getId(), String.format("Name: %s", org.getName()));
+    AuditLogger.logCreate("Organization", org.getId(), "Organization record created");
   }
 
   @PostUpdate
   public void onOrganizationUpdate(Organization org) {
-    AuditLogger.logUpdate("Organization", org.getId(), String.format("Updated: %s", org.getName()));
+    AuditLogger.logUpdate("Organization", org.getId(), "Organization record updated");
   }
 
   @PostRemove
   public void onOrganizationDelete(Organization org) {
-    AuditLogger.logDelete("Organization", org.getId(), String.format("Deleted: %s", org.getName()));
+    AuditLogger.logDelete("Organization", org.getId(), "Organization record deleted");
   }
 }
