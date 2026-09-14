@@ -39,7 +39,7 @@ WORKDIR /app
 
 EXPOSE 8080
 
-CMD ["java", "-jar", "/app/back/microcrm-0.0.1-SNAPSHOT.jar"]
+CMD ["sh", "-c", "java $JAVA_OPTS -jar /app/back/microcrm-0.0.1-SNAPSHOT.jar"]
 
 FROM alpine:3.19 as standalone
 
